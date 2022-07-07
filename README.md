@@ -14,7 +14,13 @@ nltk
 Do the following in a separate console (so as not to download each time the script is run):
 `
 import nltk
+`
+`
 nltk.download('averaged_perceptron_tagger')
+`
+`
 nltk.download('wordnet')
+`
+`
 nltk.download('omw-1.4') 
 `
