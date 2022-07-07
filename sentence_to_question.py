@@ -12,50 +12,71 @@ Output:
 'Will there be a book here?'
 
 """
-import numpy as np
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk import pos_tag
 
-sentence = raw_input("Enter an English sentence to be transformed into a question: \n")
+sentence = input("Enter an English sentence to be transformed into a question: \n")
 sentence = sentence.lower()
-sentence = sentence.replace('.', '')
+if sentence[-1] == '.':
+    # remove the final period
+    sentence = sentence[:-1]
+
+
 question_keywords = ['is', 'will', 'are', 'was', 'were', 'am']
 
 word_decomposition = sentence.split(' ')
+verbs_and_tags = [(i, tuple_i) for i, tuple_i in enumerate(pos_tag(word_decomposition)) if tuple_i[1][0]=='V']
+verbs = [word[1][0] for word in verbs_and_tags]
+tags = [word[1][1] for word in verbs_and_tags]
+print(verbs_and_tags)
+print(verbs)
 
+changed = False
 for i, word_i in enumerate(word_decomposition):
     if word_i in question_keywords:
-        for x in question_keywords:
-            if word_decomposition.count(x) > 1:
-                
-                if pos_tag(word_decomposition)[i + 1][1] == 'VBN':
-                    word_decomposition.insert(0, word_i)
-                    word_decomposition.pop(i + 1)
-                break
-            else:
-                word_decomposition.insert(0, word_i)
-                word_decomposition.pop(i + 1)
-                break
-    else:
-        if i == len(word_decomposition) - 2:
-            if word_decomposition == sentence.split(' '): # If sentence unchanged
-                # Verb reduction:
-                for i in range(len(word_decomposition)):
-                     if 'VB' in pos_tag(word_decomposition)[i][1]:
-                         word_decomp[i] = WordNetLemmatizer().lemmatize(word_i, 'v')
+        for q_word in question_keywords:
 
-                     word_decomposition.insert(0, 'Did')
-     
+            word_decomposition.insert(0, word_i)
+            word_decomposition.pop(i + 1)
+            changed = True
+            break
+
+
+# Check if unchanged
+if not changed:
+    lemmatized_verbs = [WordNetLemmatizer().lemmatize(verb, 'v') for verb in verbs]
+    lemmatized_verb = lemmatized_verbs[0]
+    verb_loc = verbs_and_tags[0][0]
+    print(verb_loc)
+    word_decomposition[verb_loc] = lemmatized_verb
+
+    # Verb reduction:
+    if all([tag in ['VBN', 'VBD'] for tag in tags]):
+        # past participle or past tense, resp.
+        word_decomposition.insert(0, 'Did') # + word_decomposition
+
+    elif all([tag in ['VBG','VBZ'] for tag in tags]):
+        # present participle or present tense, resp.
+        word_decomposition.insert(0, 'Does')
+
+    elif all([tag in ['VBC', 'VBF'] for tag in tags]):
+        # future
+        word_decomposition.insert(0, 'Will')
+
+    else:  #'VBP', 
+        # other verbs
+        word_decomposition.insert(0, 'Do')
+        print(f'possible error: verb not recognized, examine tag list:\n{tags}')
+
+
+# Post-processing: 
 for i, word_i in enumerate(word_decomposition): # Cycle through all words
 
-    if 'NP' in str(np.array(pos_tag([word_i]))[0][1]): # Searches for a proper noun
-        word_decomp[i] = word_i.capitalize() # Capitalizes the proper noun
-                
-dot_to_que = word_decomposition[len(word_decomposition)-1].replace('.', '') # Deletes . at end of sentence if it is there
-word_decomp.insert(0, word_decomposition[0].capitalize()) # Capitalizes first word of sentence
-word_decomposition.pop(1) # Removes the possibly lowercase first word since the capitalized version has been inserted already
+    if 'NP' in pos_tag([word_i])[0][1]: # Searches for a proper noun
+        word_decomposition[i] = word_i.capitalize() # Capitalizes the proper noun
+
+word_decomposition[0] = word_decomposition[0].capitalize() # Capitalizes first word of sentence
 question = (' ').join(word_decomposition) # Create a string to reform the question instead of word by word
-if '?' not in question: # Ensures that ? is attached to end of the sentence
-    question += '?' 
+question += '?' 
     
-print(question) #Return the final formed question version of the input sentence
+print(question) # Return the final formed question version of the input sentence
