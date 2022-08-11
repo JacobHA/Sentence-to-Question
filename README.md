@@ -18,3 +18,7 @@ nltk.download('averaged_perceptron_tagger')
 nltk.download('wordnet')
 nltk.download('omw-1.4') 
 ```
+
+
+----
+Created on Wed Nov 14 22:54:32 2018
